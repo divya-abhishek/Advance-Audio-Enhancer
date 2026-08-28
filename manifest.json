@@ -1,0 +1,61 @@
+{
+  "manifest_version": 3,
+  "name": "Advance Audio Enhancer",
+  "version": "1.0",
+  "description": "Enhance your audio experience with volume boosting and advanced presets.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "tabs",
+    "storage",
+    "tabCapture",
+    "offscreen"
+  ],
+  "host_permissions": [
+    "*://*/*"
+  ],
+  "background": {
+    "service_worker": "sw.js"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "reverb.wav",
+        "panel.html",
+        "panel.js",
+        "fonts/gilda-display-400.woff2",
+        "fonts/poppins-400.woff2",
+        "fonts/poppins-500.woff2",
+        "fonts/poppins-600.woff2",
+        "fonts/poppins-700.woff2"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*/*"
+      ],
+      "js": [
+        "panel-host.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ]
+}

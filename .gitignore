@@ -1,0 +1,10 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp
+
+# Packaged builds (build these locally with `zip -r extension.zip .`)
+*.zip

@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Advance Audio Enhancer</title>
+  <style>
+    /* Bundled locally so there is no network fetch and no CSP issue. */
+    @font-face {
+      font-family: "Gilda Display";
+      src: url("fonts/gilda-display-400.woff2") format("woff2");
+      font-weight: 400; font-style: normal; font-display: swap;
+    }
+    @font-face {
+      font-family: "Poppins";
+      src: url("fonts/poppins-400.woff2") format("woff2");
+      font-weight: 400; font-style: normal; font-display: swap;
+    }
+    @font-face {
+      font-family: "Poppins";
+      src: url("fonts/poppins-500.woff2") format("woff2");
+      font-weight: 500; font-style: normal; font-display: swap;
+    }
+    @font-face {
+      font-family: "Poppins";
+      src: url("fonts/poppins-600.woff2") format("woff2");
+      font-weight: 600; font-style: normal; font-display: swap;
+    }
+    @font-face {
+      font-family: "Poppins";
+      src: url("fonts/poppins-700.woff2") format("woff2");
+      font-weight: 700; font-style: normal; font-display: swap;
+    }
+  </style>
+  <style>
+    /* ============================================================
+       Static light theme. No @media colour-scheme rules anywhere,
+       so this renders identically on light and dark systems.
+       Sized to fit Chrome's 600px popup limit with no scrollbar.
+       ============================================================ */
+    :root {
+      --ink: #0b2242;
+      --label: #35578f;
+      --muted: #93aac9;
+      --track: #dbe8f9;
+      --accent: #1a78ef;
+      --accent2: #4f9fff;
+      --accent-deep: #0b56d0;
+      --glow: rgba(26, 120, 239, 0.3);
+      --card: rgba(255, 255, 255, 0.6);
+      --card-hi: rgba(255, 255, 255, 0.95);
+
+      /* Primary (display) face and secondary (body/UI) face. */
+      --font-display: "Gilda Display", Georgia, "Times New Roman", serif;
+      --font: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI",
+              Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html { background: transparent; }
+
+    body {
+      margin: 0;
+      /* The shadow must fade out completely INSIDE the iframe. If it reaches
+         the edge it gets clipped, and that hard clip line reads as a frame
+         around the card on light pages. Padding >= the shadow's reach. */
+      padding: 30px;
+      width: 478px;                  /* 418px card + 30px padding each side */
+      overflow: hidden;              /* never show a scrollbar */
+      background: transparent;       /* fully transparent over the page */
+      font-family: var(--font);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      user-select: none;
+    }
+
+    /* ---------- Panel: genuinely rounded card ----------
+       This is no longer a Chrome popup window (whose frame is opaque and
+       square and cannot be styled — crbug.com/40852436). It is an iframe
+       injected into the page, so border-radius actually takes effect. */
+    .panel {
+      position: relative;
+      border-radius: 26px;
+      padding: 22px 24px 16px;
+      box-shadow:
+        0 10px 24px -8px rgba(13, 44, 102, 0.28),
+        0 3px 8px -3px rgba(13, 44, 102, 0.14),
+        0 0 0 1px rgba(13, 44, 102, 0.05);
+      background:
+        radial-gradient(130% 80% at 6% -8%, rgba(255,255,255,0.99), rgba(255,255,255,0) 50%),
+        radial-gradient(120% 75% at 102% 106%, rgba(172,206,251,0.6), rgba(255,255,255,0) 55%),
+        linear-gradient(157deg, #f4f8ff 0%, #e6f0fe 47%, #d7e7fc 100%);
+      overflow: hidden;
+    }
+
+    /* Outer bevel: hard light along top/left, shade along bottom/right,
+       so the whole panel reads as a raised, domed surface. */
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 3;
+      border-radius: 26px;
+      box-shadow:
+        inset 0 3px 0 rgba(255, 255, 255, 1),
+        inset 3px 0 0 rgba(255, 255, 255, 0.88),
+        inset 0 -3px 0 rgba(116, 160, 221, 0.6),
+        inset -3px 0 0 rgba(116, 160, 221, 0.5),
+        inset 0 10px 18px rgba(255, 255, 255, 0.8),
+        inset 0 -12px 20px rgba(116, 160, 221, 0.32),
+        inset 14px 0 22px rgba(255, 255, 255, 0.35),
+        inset -14px 0 22px rgba(116, 160, 221, 0.16);
+    }
+
+    /* Inner curved stroke: a soft rounded ring inset from the sharp edge,
+       giving the 2.5D "glass pane seated in a frame" read. */
+    .panel::after {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      border-radius: 20px;
+      pointer-events: none;
+      z-index: 3;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow:
+        0 1px 0 rgba(116, 160, 221, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.65),
+        inset 0 -1px 0 rgba(116, 160, 221, 0.22);
+    }
+
+    /* Specular sheen sweeping the upper surface */
+    .sheen {
+      position: absolute;
+      top: -55%; left: -25%;
+      width: 150%; height: 95%;
+      background: linear-gradient(178deg, rgba(255,255,255,0.5), rgba(255,255,255,0) 62%);
+      transform: rotate(-7deg);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .panel > *:not(.sheen) { position: relative; z-index: 2; }
+
+    /* ---------- Header ---------- */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 19px;
+    }
+
+    .title {
+      font-family: var(--font-display);
+      font-size: 25px;
+      font-weight: 400;
+      letter-spacing: -0.005em;
+      margin: 0;
+      line-height: 1.05;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 6px 0 0;
+      font-weight: 400;
+      letter-spacing: -0.008em;
+    }
+
+    /* ---------- Power button ---------- */
+    .power {
+      flex-shrink: 0;
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      background: linear-gradient(150deg, rgba(255,255,255,0.95), rgba(230,241,255,0.6));
+      box-shadow:
+        0 5px 14px rgba(20, 62, 132, 0.15),
+        inset 0 2px 2px rgba(255, 255, 255, 1),
+        inset 0 -2px 3px rgba(124, 166, 224, 0.4);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0;
+      transition: transform 0.16s ease, box-shadow 0.24s ease, opacity 0.24s ease;
+    }
+
+    .power:hover { transform: translateY(-1px); }
+    .power:active { transform: scale(0.93); }
+
+    .power[aria-pressed="true"] {
+      box-shadow:
+        0 6px 18px var(--glow),
+        inset 0 2px 2px rgba(255, 255, 255, 1),
+        inset 0 -2px 3px rgba(124, 166, 224, 0.4);
+    }
+
+    .power[aria-pressed="false"] { opacity: 0.48; }
+    .power[aria-pressed="false"] .wave rect { fill: var(--muted); }
+
+    .wave rect {
+      fill: var(--accent);
+      transform-box: fill-box;
+      transform-origin: center;
+      transition: fill 0.2s ease;
+    }
+
+    body.playing .power[aria-pressed="true"] .wave rect { animation: bar 0.85s ease-in-out infinite; }
+    body.playing .power[aria-pressed="true"] .wave rect:nth-child(1) { animation-delay: 0s; }
+    body.playing .power[aria-pressed="true"] .wave rect:nth-child(2) { animation-delay: 0.13s; }
+    body.playing .power[aria-pressed="true"] .wave rect:nth-child(3) { animation-delay: 0.26s; }
+    body.playing .power[aria-pressed="true"] .wave rect:nth-child(4) { animation-delay: 0.39s; }
+    body.playing .power[aria-pressed="true"] .wave rect:nth-child(5) { animation-delay: 0.52s; }
+
+    @keyframes bar {
+      0%, 100% { transform: scaleY(0.5); }
+      50%      { transform: scaleY(1.32); }
+    }
+
+    /* ---------- Sliders ---------- */
+    .slider-row { margin-bottom: 15px; }
+
+    .slider-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 9px;
+    }
+
+    .slider-name {
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--label);
+    }
+
+    .slider-val {
+      font-size: 15.5px;
+      font-weight: 600;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--track);
+      outline: none;
+      margin: 0;
+      cursor: pointer;
+      box-shadow: inset 0 1px 2px rgba(88, 128, 184, 0.26);
+    }
+
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 8px; border-radius: 999px; background: transparent;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: linear-gradient(160deg, #ffffff, #f1f6ff);
+      border: 1px solid rgba(160, 196, 240, 0.9);
+      box-shadow: 0 3px 8px rgba(20, 62, 132, 0.28), inset 0 1px 1px #fff;
+      margin-top: -7px;
+      transition: transform 0.14s ease, box-shadow 0.2s ease;
+    }
+
+    input[type="range"]:hover::-webkit-slider-thumb {
+      box-shadow: 0 4px 11px rgba(20, 62, 132, 0.32), inset 0 1px 1px #fff;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:active { transform: scale(1.14); }
+
+    /* ---------- Presets ---------- */
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--label);
+      margin: 18px 0 10px;
+    }
+
+    .preset-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 11px;
+    }
+
+    .preset {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 13px;
+      border-radius: 16px;
+      background: var(--card);
+      border: 1px solid var(--card-hi);
+      box-shadow:
+        inset 0 1px 1px rgba(255, 255, 255, 0.95),
+        inset 0 -2px 2px rgba(124, 166, 224, 0.18),
+        0 2px 6px rgba(20, 62, 132, 0.07);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--ink);
+      text-align: left;
+      letter-spacing: -0.014em;
+      transition: transform 0.16s cubic-bezier(0.34, 1.4, 0.64, 1),
+                  box-shadow 0.2s ease, background 0.2s ease,
+                  border-color 0.2s ease, color 0.2s ease;
+    }
+
+    .preset:hover {
+      transform: translateY(-2px);
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.95), 0 7px 16px rgba(20, 62, 132, 0.16);
+    }
+
+    .preset:active { transform: translateY(0) scale(0.975); }
+
+    .preset svg {
+      width: 20px; height: 20px;
+      flex-shrink: 0;
+      color: var(--accent);
+      transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), color 0.2s ease;
+    }
+
+    .preset:hover svg { transform: scale(1.14); }
+
+    .preset[aria-pressed="true"] {
+      background: linear-gradient(140deg, var(--accent2), var(--accent-deep));
+      border-color: rgba(255, 255, 255, 0.5);
+      color: #ffffff;
+      box-shadow: 0 7px 18px var(--glow), inset 0 1px 1px rgba(255,255,255,0.55);
+    }
+
+    .preset[aria-pressed="true"] svg { color: #ffffff; }
+
+    .preset#preset-lofi[aria-pressed="true"] svg   { animation: spin 3.4s linear infinite; }
+    .preset#preset-eightd[aria-pressed="true"] svg { animation: orbit 2.6s ease-in-out infinite; }
+    .preset#preset-vocal[aria-pressed="true"] svg  { animation: pulse 1.5s ease-in-out infinite; }
+    .preset#clear-all:active svg { animation: spin-once 0.5s ease; }
+
+    @keyframes spin      { to { transform: rotate(360deg); } }
+    @keyframes spin-once { from { transform: rotate(0); } to { transform: rotate(-360deg); } }
+    @keyframes pulse     { 0%,100% { transform: scale(1); } 50% { transform: scale(1.17); } }
+    @keyframes orbit     { 0%,100% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(180deg) scale(1.1); } }
+
+    /* ---------- Divider / footer ---------- */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg,
+        rgba(148,184,230,0) 0%, rgba(148,184,230,0.8) 16%,
+        rgba(148,184,230,0.8) 84%, rgba(148,184,230,0) 100%);
+      margin: 16px 0 14px;
+    }
+
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 13px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(148, 184, 230, 0.5);
+    }
+
+    .credit {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+      letter-spacing: -0.008em;
+    }
+
+    .footer .eq { width: 20px; height: 20px; color: var(--accent); flex-shrink: 0; }
+
+    .footer .eq rect {
+      fill: var(--accent);
+      transform-box: fill-box;
+      transform-origin: center bottom;
+    }
+
+    body.playing .footer .eq rect { animation: bar 0.78s ease-in-out infinite; }
+    body.playing .footer .eq rect:nth-child(1) { animation-delay: 0.05s; }
+    body.playing .footer .eq rect:nth-child(2) { animation-delay: 0.2s; }
+    body.playing .footer .eq rect:nth-child(3) { animation-delay: 0.35s; }
+    body.playing .footer .eq rect:nth-child(4) { animation-delay: 0.5s; }
+
+    /* ---------- States ---------- */
+    .content { transition: opacity 0.24s ease, filter 0.24s ease; }
+    .content.off { opacity: 0.42; pointer-events: none; filter: grayscale(0.5); }
+
+    .status {
+      max-height: 0; opacity: 0; overflow: hidden;
+      text-align: center;
+      font-size: 11.5px;
+      color: #b4432f;
+      font-weight: 600;
+      line-height: 1.4;
+      transition: max-height 0.25s ease, opacity 0.25s ease, margin 0.25s ease;
+    }
+
+    .status.show { max-height: 44px; opacity: 1; margin-top: 9px; }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <div class="sheen"></div>
+    <div class="header">
+      <div>
+        <p class="title">Advance Audio Enhancer</p>
+        <p class="subtitle">Perfect your sound</p>
+      </div>
+      <button class="power" id="power" aria-pressed="true" aria-label="Turn enhancer on or off" title="Turn enhancer on or off">
+        <svg class="wave" viewBox="0 0 24 24" width="25" height="25">
+          <rect x="2.5"  y="9.5" width="2.7" height="5"  rx="1.35"/>
+          <rect x="7"    y="6.5" width="2.7" height="11" rx="1.35"/>
+          <rect x="11.5" y="3.5" width="2.7" height="17" rx="1.35"/>
+          <rect x="16"   y="6.5" width="2.7" height="11" rx="1.35"/>
+          <rect x="20.5" y="9.5" width="2.7" height="5"  rx="1.35"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="content" id="content">
+      <div class="slider-row">
+        <div class="slider-head">
+          <span class="slider-name">Reverb</span>
+          <span class="slider-val" id="reverb-val">0%</span>
+        </div>
+        <input type="range" id="reverb" min="0" max="100" step="1" value="0" aria-label="Reverb" />
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-head">
+          <span class="slider-name">Bass</span>
+          <span class="slider-val" id="bass-val">0%</span>
+        </div>
+        <input type="range" id="bass" min="0" max="100" step="1" value="0" aria-label="Bass" />
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-head">
+          <span class="slider-name">Clarity</span>
+          <span class="slider-val" id="clarity-val">0%</span>
+        </div>
+        <input type="range" id="clarity" min="0" max="100" step="1" value="0" aria-label="Clarity" />
+      </div>
+
+      <p class="section-label">Quick Presets</p>
+      <div class="preset-grid">
+        <button class="preset" id="preset-lofi" aria-pressed="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+            <circle cx="12" cy="12" r="9"/>
+            <circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none"/>
+            <path d="M16.4 8.6a5.8 5.8 0 0 1 .9 2.9"/>
+            <path d="M14.9 11.5a3 3 0 0 1 .4 1.5"/>
+          </svg>
+          LoFi Feeling
+        </button>
+
+        <button class="preset" id="preset-eightd" aria-pressed="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+            <circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/>
+            <path d="M12 3.4v1.9M12 18.7v1.9M3.4 12h1.9M18.7 12h1.9"/>
+            <path d="M5.9 5.9l1.35 1.35M16.75 16.75L18.1 18.1M18.1 5.9l-1.35 1.35M7.25 16.75L5.9 18.1"/>
+          </svg>
+          8D Pan
+        </button>
+
+        <button class="preset" id="preset-vocal" aria-pressed="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+            <rect x="9.1" y="2.4" width="5.8" height="11.2" rx="2.9"/>
+            <path d="M5.4 11.3a6.6 6.6 0 0 0 13.2 0"/>
+            <path d="M12 17.9v3.7"/><path d="M8.7 21.6h6.6"/>
+          </svg>
+          Vocal Boost
+        </button>
+
+        <button class="preset" id="clear-all">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.6 12a8.6 8.6 0 1 1-2.7-6.2"/>
+            <path d="M20.7 4.1v5.2h-5.2"/>
+          </svg>
+          Clear All
+        </button>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="slider-row" style="margin-bottom: 0;">
+        <div class="slider-head">
+          <span class="slider-name">Volume</span>
+          <span class="slider-val" id="volume-val">100%</span>
+        </div>
+        <input type="range" id="volume" min="20" max="300" step="5" value="100" aria-label="Volume" />
+      </div>
+
+      <p class="status" id="status"></p>
+    </div>
+
+    <div class="footer">
+      <span class="credit">Made by Divya Abhishek</span>
+      <svg class="eq" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+        <rect x="2.8"  y="12" width="2.9" height="8"  rx="1.45"/>
+        <rect x="8"    y="8"  width="2.9" height="12" rx="1.45"/>
+        <rect x="13.2" y="4"  width="2.9" height="16" rx="1.45"/>
+        <rect x="18.4" y="9"  width="2.9" height="11" rx="1.45"/>
+      </svg>
+    </div>
+  </div>
+
+  <script src="panel.js"></script>
+</body>
+</html>
