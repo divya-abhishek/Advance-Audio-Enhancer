@@ -12,6 +12,8 @@ Works on DRM-protected streams (YouTube, Spotify Web Player, Netflix, Prime Vide
 
 **[Get it on the Microsoft Edge Add-ons store →](https://microsoftedge.microsoft.com/addons/detail/advance-audio-enhancer/mngojgokofkpnoimgpnkhkdbiaimbpdn)**
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+
 </div>
 
 ---
@@ -154,9 +156,11 @@ No build step — everything is vanilla HTML/CSS/JS, loaded directly by Chrome.
 
 To make changes: edit the relevant file, then hit the reload icon for the extension on `chrome://extensions` and refresh any test tab.
 
+Pull requests are welcome — for anything beyond a small fix, opening an issue first to discuss the approach is appreciated.
+
 ## License
 
-Add a license of your choice here (MIT is a common pick for a project like this) before publishing.
+MIT — see [LICENSE](./LICENSE) for details. Contributions are welcome: open an issue or a pull request.
 
 ## Credits
 
