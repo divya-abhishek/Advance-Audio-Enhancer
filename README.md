@@ -10,6 +10,8 @@ Works on DRM-protected streams (YouTube, Spotify Web Player, Netflix, Prime Vide
 
 [Features](#features) · [Screenshots](#screenshots) · [Install](#installation) · [How it works](#how-it-works) · [Permissions](#permissions--privacy) · [Development](#development)
 
+**[Get it on the Microsoft Edge Add-ons store →](https://microsoftedge.microsoft.com/addons/detail/advance-audio-enhancer/mngojgokofkpnoimgpnkhkdbiaimbpdn)**
+
 </div>
 
 ---
@@ -27,11 +29,21 @@ Works on DRM-protected streams (YouTube, Spotify Web Player, Netflix, Prime Vide
 
 ## Screenshots
 
-![Advance Audio Enhancer panel open over a video site](./docs/screenshots/01-youtube-context.png)
+![Advance Audio Enhancer panel open over a video site](https://i.postimg.cc/kXFkPJhW/01-youtube-context.png)
+
+### Optimized to stay light
+
+All three sliders raised, a preset active, at once — Task Manager shows CPU sitting in normal single-digit-to-twenties range for the system overall, no sustained spike attributable to the extension:
+
+![Task Manager CPU graph with every slider and a preset active at once](https://i.postimg.cc/XqvyN7kp/Screenshot-2026-08-28-043321.png)
+
+This isn't incidental — see [the performance-sensitive design decisions below](#the-audio-graph) for what specifically keeps it light: the reverb convolver and the 8D pan oscillator are only wired into the audio graph while actually in use, slider drags are coalesced instead of sent per-event, and the panel's animation poll stops entirely once it's closed or the tab is backgrounded.
 
 ## Installation
 
-This extension isn't on the Chrome Web Store yet — install it from source:
+**Microsoft Edge:** install it directly from the [Edge Add-ons store](https://microsoftedge.microsoft.com/addons/detail/advance-audio-enhancer/mngojgokofkpnoimgpnkhkdbiaimbpdn) — no setup required.
+
+**Chrome, or building from source:**
 
 1. Download or clone this repository
 2. Open `chrome://extensions` (or `edge://extensions` on Edge)
