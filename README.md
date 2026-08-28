@@ -161,7 +161,3 @@ Pull requests are welcome — for anything beyond a small fix, opening an issue 
 ## License
 
 MIT — see [LICENSE](./LICENSE) for details. Contributions are welcome: open an issue or a pull request.
-
-## Credits
-
-Made by **Divya Abhishek**.
